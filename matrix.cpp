@@ -3,9 +3,8 @@
 #include <new>
 
 namespace tsulyauf {
-  void print_matrix(const int *const *matrix, const std::size_t rows, const std::size_t columns)
+  void printMatrix(const int *const *matrix, const std::size_t rows, const std::size_t columns)
   {
-    std::cout << "Matrix:" << std::endl;
     for (std::size_t i = 0; i < rows; ++i) {
       for (std::size_t j = 0; j < columns; ++j) {
         std::cout << matrix[i][j] << " ";
@@ -14,7 +13,7 @@ namespace tsulyauf {
     }
   }
 
-  void delete_matrix(int **matrix, const std::size_t rows, const std::size_t)
+  void deleteMatrix(int **matrix, const std::size_t rows)
   {
     if (matrix == nullptr) {
       return;
@@ -24,7 +23,6 @@ namespace tsulyauf {
     }
     delete[] matrix;
   }
-
 } // namespace tsulyauf
 
 int main()
@@ -33,24 +31,21 @@ int main()
   const int invalid_memory_usage = 2;
 
   long long rows_in = 0, columns_in = 0;
-  std::size_t rows = 0, columns = 0;
-  std::cout << "Enter the number of rows and columns: ";
   std::cin >> rows_in >> columns_in;
 
-  if (std::cin.fail() || rows_in < 1 || columns_in < 1) {
+  if (std::cin.fail() || rows_in <= 0 || columns_in <= 0) {
     std::cerr << "Invalid rows and columns input" << std::endl;
     return invalid_input;
   }
-  rows = rows_in;
-  columns = columns_in;
+
+  const std::size_t rows = rows_in;
+  const std::size_t columns = columns_in;
 
   int **matrix = nullptr;
   int **transposed_matrix = nullptr;
 
   try {
-    matrix = new int *[rows] {};
-
-    std::cout << "Enter the numbers (line by line):\n";
+    matrix = new int *[rows]{};
 
     for (std::size_t i = 0; i < rows; ++i) {
       matrix[i] = new int[columns]{};
@@ -60,13 +55,13 @@ int main()
 
         if (std::cin.fail()) {
           std::cerr << "Invalid number input" << std::endl;
-          tsulyauf::delete_matrix(matrix, rows, columns);
+          tsulyauf::deleteMatrix(matrix, rows);
           return invalid_input;
         }
       }
     }
 
-    transposed_matrix = new int *[columns] {};
+    transposed_matrix = new int *[columns]{};
 
     for (std::size_t i = 0; i < columns; ++i) {
       transposed_matrix[i] = new int[rows]{};
@@ -75,15 +70,14 @@ int main()
       }
     }
 
-    tsulyauf::print_matrix(matrix, rows, columns);
-    tsulyauf::print_matrix(transposed_matrix, columns, rows);
-    tsulyauf::delete_matrix(matrix, rows, columns);
-    tsulyauf::delete_matrix(transposed_matrix, columns, rows);
+    tsulyauf::printMatrix(transposed_matrix, columns, rows);
+    tsulyauf::deleteMatrix(matrix, rows);
+    tsulyauf::deleteMatrix(transposed_matrix, columns);
 
   } catch (const std::bad_alloc &e) {
-    std::cerr << "Memory allocation failed" << e.what() << std::endl;
-    tsulyauf::delete_matrix(matrix, rows, columns);
-    tsulyauf::delete_matrix(transposed_matrix, columns, rows);
+    std::cerr << "Memory allocation failed: " << e.what() << std::endl;
+    tsulyauf::deleteMatrix(matrix, rows);
+    tsulyauf::deleteMatrix(transposed_matrix, columns);
     return invalid_memory_usage;
   }
 
