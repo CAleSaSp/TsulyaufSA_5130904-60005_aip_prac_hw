@@ -5,7 +5,7 @@
 #include <stdexcept>
 
 namespace tsulyauf {
-  void delete_matrix(int **matrix, const std::size_t rows)
+  void delete_matrix(int** matrix, const std::size_t rows)
   {
     if (matrix != nullptr) {
       for (std::size_t i = 0; i < rows; ++i) {
@@ -15,11 +15,30 @@ namespace tsulyauf {
     }
   }
 
-  int **get_matrix(const std::size_t rows, const std::size_t columns)
+  bool read_size(std::size_t& rows, std::size_t& columns)
   {
-    int **matrix = new int *[rows] {};
+    long long rows_in = 0, columns_in = 0;
+    std::cout << "Введите размеры матрицы: ";
+    std::cin >> rows_in >> columns_in;
+    std::cout << "\n";
+
+    if (std::cin.fail() || rows_in < 0 || columns_in < 0) {
+      return false;
+    }
+
+    rows = static_cast< std::size_t >(rows_in);
+    columns = static_cast< std::size_t >(columns_in);
+
+    return true;
+  }
+
+  int** get_matrix(const std::size_t rows, const std::size_t columns)
+  {
+    int** matrix = new int*[rows]{};
 
     try {
+      std::cout << "Введите элементы матрицы:\n";
+
       for (std::size_t i = 0; i < rows; ++i) {
         matrix[i] = new int[columns];
 
@@ -39,21 +58,20 @@ namespace tsulyauf {
     return matrix;
   }
 
-  int **concat_rows(const int *const *lhs, const std::size_t n1, const std::size_t m1, const int *const *rhs,
+  int** concat_rows(const int* const* lhs, const std::size_t n1, const std::size_t m1, const int* const* rhs,
                     const std::size_t n2, const std::size_t m2)
   {
-    std::size_t max_n = n1 > n2 ? n1 : n2;
-
-    if (m1 > std::numeric_limits<std::size_t>::max() - m2) {
+    if (m1 > std::numeric_limits< std::size_t >::max() - m2) {
       throw std::overflow_error("Переполнение размера массива");
     }
 
-    int **matrix = new int *[max_n] {};
+    const std::size_t max_n = n1 > n2 ? n1 : n2;
+    int** matrix = new int*[max_n]{};
 
     try {
       for (std::size_t i = 0; i < max_n; ++i) {
-
-        bool has_l = i < n1, has_r = i < n2;
+        const bool has_l = i < n1;
+        const bool has_r = i < n2;
         std::size_t len = 0;
 
         if (has_l && has_r) {
@@ -67,7 +85,6 @@ namespace tsulyauf {
         matrix[i] = new int[len];
 
         for (std::size_t j = 0; j < len; ++j) {
-
           if (has_l && j < m1) {
             matrix[i][j] = lhs[i][j];
           } else if (has_l && has_r && (j - m1) < m2) {
@@ -85,17 +102,25 @@ namespace tsulyauf {
     return matrix;
   }
 
-  void print_matrix(const int *const *matrix, const std::size_t rows, const std::size_t columns)
+  void print_row(const int* row, const std::size_t length)
+  {
+    for (std::size_t j = 0; j < length; ++j) {
+      if (j > 0) {
+        std::cout << " ";
+      }
+      std::cout << row[j];
+    }
+    std::cout << "\n";
+  }
+
+  void print_matrix(const int* const* matrix, const std::size_t rows, const std::size_t columns)
   {
     for (std::size_t i = 0; i < rows; ++i) {
-      for (std::size_t j = 0; j < columns; ++j) {
-        std::cout << matrix[i][j] << " ";
-      }
-      std::cout << "\n";
+      print_row(matrix[i], columns);
     }
   }
 
-  void print_wavy_matrix(const int *const *matrix, const std::size_t n1, const std::size_t m1, const std::size_t n2,
+  void print_wavy_matrix(const int* const* matrix, const std::size_t n1, const std::size_t m1, const std::size_t n2,
                          const std::size_t m2)
   {
     std::size_t max_n = 0, min_n = 0, tail_len = 0;
@@ -111,104 +136,55 @@ namespace tsulyauf {
 
     for (std::size_t i = 0; i < max_n; ++i) {
       if (i < min_n) {
-        for (std::size_t j = 0; j < (m1 + m2); ++j) {
-          std::cout << matrix[i][j];
-          if (j < (m1 + m2 - 1)) {
-            std::cout << " ";
-          }
-        }
+        print_row(matrix[i], m1 + m2);
       } else {
-        for (std::size_t j = 0; j < tail_len; ++j) {
-          std::cout << matrix[i][j];
-          if (j < (tail_len - 1)) {
-            std::cout << " ";
-          }
-        }
+        print_row(matrix[i], tail_len);
       }
-      std::cout << "\n";
     }
   }
 } // namespace tsulyauf
 
 int main()
 {
-  const int err_invalid_argument = 1, err_bad_alloc = 2, err_overflow_error = 3;
-  const int min_dimension = 1;
-  long long rows1_in = 0, columns1_in = 0, rows2_in = 0, columns2_in = 0;
+  const int err_invalid_argument = 1, err_internal = 2;
 
-  std::cout << "Введите размер 1 матрицы: ";
-  std::cin >> rows1_in >> columns1_in;
-  std::cout << "\n";
+  std::size_t rows1 = 0, columns1 = 0, rows2 = 0, columns2 = 0;
 
-  if (std::cin.fail() || rows1_in < min_dimension || columns1_in < min_dimension) {
-    std::cerr << "Неправильный ввод размера 1 матрицы\n";
+  if (!tsulyauf::read_size(rows1, columns1) || !tsulyauf::read_size(rows2, columns2)) {
+    std::cerr << "Неправильный ввод размеров матриц\n";
     return err_invalid_argument;
   }
 
-  std::size_t rows1 = static_cast<std::size_t>(rows1_in);
-  std::size_t columns1 = static_cast<std::size_t>(columns1_in);
-
-  std::cout << "Введите размер 2 матрицы: ";
-  std::cin >> rows2_in >> columns2_in;
-  std::cout << "\n";
-
-  if (std::cin.fail() || rows2_in < min_dimension || columns2_in < min_dimension) {
-    std::cerr << "Неправильный ввод размера 2 матрицы\n";
-    return err_invalid_argument;
-  }
-
-  std::size_t rows2 = static_cast<std::size_t>(rows2_in);
-  std::size_t columns2 = static_cast<std::size_t>(columns2_in);
-
-  int **matrix1 = nullptr;
-  int **matrix2 = nullptr;
+  int** matrix1 = nullptr;
+  int** matrix2 = nullptr;
+  int** matrix3 = nullptr;
+  int status = 0;
 
   try {
-    std::cout << "Введите элементы 1 матрицы (" << rows1 << " строк, " << columns1 << " столбцов):\n";
     matrix1 = tsulyauf::get_matrix(rows1, columns1);
-  } catch (const std::bad_alloc &) {
-    std::cerr << "Ошибка выделения памяти для матрицы 1\n";
-    return err_bad_alloc;
-  } catch (const std::invalid_argument &e) {
-    std::cerr << "Ошибка ввода: " << e.what() << "\n";
-    return err_invalid_argument;
-  }
-  try {
-    std::cout << "Введите элементы 2 матрицы (" << rows2 << " строк, " << columns2 << " столбцов): \n";
     matrix2 = tsulyauf::get_matrix(rows2, columns2);
-  } catch (const std::bad_alloc &) {
-    std::cerr << "Ошибка выделения памяти для матрицы 2\n";
-    tsulyauf::delete_matrix(matrix1, rows1);
-    return err_bad_alloc;
-  } catch (const std::invalid_argument &e) {
-    std::cerr << "Ошибка ввода: " << e.what() << "\n";
-    tsulyauf::delete_matrix(matrix1, rows1);
-    return err_invalid_argument;
-  }
-
-  int **matrix3 = nullptr;
-
-  try {
     matrix3 = tsulyauf::concat_rows(matrix1, rows1, columns1, matrix2, rows2, columns2);
-  } catch (const std::overflow_error &e) {
-    std::cerr << "Ошибка переполнения: " << e.what() << "\n";
-    tsulyauf::delete_matrix(matrix1, rows1);
-    tsulyauf::delete_matrix(matrix2, rows2);
-    return err_overflow_error;
-  } catch (const std::bad_alloc &) {
-    std::cerr << "Ошибка выделения памяти для матрицы 3\n";
-    tsulyauf::delete_matrix(matrix1, rows1);
-    tsulyauf::delete_matrix(matrix2, rows2);
-    return err_bad_alloc;
-  }
 
-  std::cout << "Матрица 1:\n";
-  tsulyauf::print_matrix(matrix1, rows1, columns1);
-  std::cout << "Матрица 2:\n";
-  tsulyauf::print_matrix(matrix2, rows2, columns2);
-  std::cout << "Матрица 3:\n";
-  tsulyauf::print_wavy_matrix(matrix3, rows1, columns1, rows2, columns2);
+    std::cout << "Матрица 1:\n";
+    tsulyauf::print_matrix(matrix1, rows1, columns1);
+    std::cout << "Матрица 2:\n";
+    tsulyauf::print_matrix(matrix2, rows2, columns2);
+    std::cout << "Матрица 3:\n";
+    tsulyauf::print_wavy_matrix(matrix3, rows1, columns1, rows2, columns2);
+
+  } catch (const std::bad_alloc& e) {
+    std::cerr << "Ошибка выделения памяти: " << e.what() << "\n";
+    status = err_internal;
+  } catch (const std::invalid_argument& e) {
+    std::cerr << "Ошибка ввода: " << e.what() << "\n";
+    status = err_invalid_argument;
+  } catch (const std::overflow_error& e) {
+    std::cerr << "Ошибка переполнения: " << e.what() << "\n";
+    status = err_internal;
+  }
   tsulyauf::delete_matrix(matrix1, rows1);
   tsulyauf::delete_matrix(matrix2, rows2);
   tsulyauf::delete_matrix(matrix3, rows1 > rows2 ? rows1 : rows2);
+
+  return status;
 }
